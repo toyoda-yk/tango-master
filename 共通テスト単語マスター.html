@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>CodePen - A Pen by yk13</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情報I 共通テスト 単語マスター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (Lucide Iconsの代用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        mono: ['"Roboto Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'zoom-in': 'zoomIn 0.3s ease-out',
+                        'slide-in': 'slideInRight 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        zoomIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: '0', transform: 'translateX(20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* カスタムスクロールバー */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5); 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.8); 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 1); 
+        }
+        
+        body {
+            background-color: #020617; /* slate-950 */
+            color: #f1f5f9; /* slate-100 */
+        }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5); /* slate-800/50 */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700/50 */
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans selection:bg-cyan-500/30 overflow-hidden relative">
+
+    <!-- 背景装飾 -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px]"></div>
+    </div>
+
+    <!-- アプリケーションルート -->
+    <div id="app" class="relative z-10 h-screen flex flex-col items-center justify-center">
+        <!-- JSでここにコンテンツを描画します -->
+    </div>
+
+    <script>
+        /**
+         * ■ データソース 1: 情報処理学会 全教科書用語リスト
+         */
+        const DATA_IPSJ = [
+          // === 1. 情報の定義・表現・デジタル化 ===
+          { term: "データ", category: "情報の定義", rate: 1.0, desc: "事実や事柄などを数字や文字，記号で表現したもの。" },
+          { term: "情報", category: "情報の定義", rate: 0.92, desc: "データを目的に応じて整理して，意味や価値を付加したもの。" },
+          { term: "知識", category: "情報の定義", rate: 0.85, desc: "情報を分析し，問題解決などに役立つように体系化したもの。" },
+          { term: "知恵", category: "情報の定義", rate: 0.8, desc: "知識を利用して、実際に正しい判断や行動ができる能力。" },
+          { term: "DIKWモデル", category: "情報の定義", rate: 0.4, desc: "情報を，データ→情報→知識→知恵の4階層に分けたモデル。" },
+          { term: "残存性", category: "情報の特性", rate: 0.6, desc: "情報は他者に与えても自分の手元からなくならないという特性。" },
+          { term: "複製性", category: "情報の特性", rate: 0.6, desc: "情報は容易にコピー（複製）を作成でき、短時間で大量に伝播するという特性。" },
+          { term: "伝播性", category: "情報の特性", rate: 0.6, desc: "情報は短時間で広範囲に伝わるという特性。" },
+          { term: "アナログ", category: "デジタル表現", rate: 0.9, desc: "情報を連続的に変化する量（長さ、角度、電圧など）で表現すること。" },
+          { term: "デジタル", category: "デジタル表現", rate: 0.95, desc: "情報を離散的な（飛び飛びの）数値で表現すること。" },
+          { term: "ビット(bit)", category: "デジタル表現", rate: 1.0, desc: "情報の最小単位。0か1かの2通りの状態を表す。" },
+          { term: "バイト(Byte)", category: "デジタル表現", rate: 1.0, desc: "情報の基本単位。通常8ビットをまとめて1バイトとする。" },
+          { term: "AD変換", category: "デジタル表現", rate: 0.85, desc: "アナログ情報をデジタル情報に変換すること。" },
+          { term: "標本化（サンプリング）", category: "デジタル表現", rate: 0.85, desc: "アナログ波形を一定の時間間隔で区切り、その時点の値を拾い出すこと。" },
+          { term: "量子化", category: "デジタル表現", rate: 0.85, desc: "標本化した値を、あらかじめ決められた段階値に近似すること。" },
+          { term: "符号化（エンコード）", category: "デジタル表現", rate: 0.85, desc: "量子化された値を2進数のデータに置き換えること。" },
+          { term: "画素（ピクセル）", category: "デジタル表現", rate: 0.8, desc: "画像を構成する最小単位の点。" },
+          { term: "解像度", category: "デジタル表現", rate: 0.8, desc: "画像のきめ細かさを表す尺度。dpiなどで表す。" },
+          { term: "RGB", category: "デジタル表現", rate: 0.75, desc: "光の三原色（赤・緑・青）を用いた色の表現方法。ディスプレイなどで使われる。" },
+          { term: "CMYK", category: "デジタル表現", rate: 0.75, desc: "色の三原色（シアン・マゼンタ・イエロー）に黒（キープレート）を加えた表現方法。印刷で使われる。" },
+          { term: "可逆圧縮", category: "デジタル表現", rate: 0.7, desc: "圧縮したデータを展開したときに、完全に元のデータに戻る圧縮方式。" },
+          { term: "非可逆圧縮", category: "デジタル表現", rate: 0.7, desc: "圧縮する際に一部のデータを切り捨てることで、元に戻らないが高い圧縮率を得る方式。" },
+
+          // === 2. コンピュータ・ネットワーク ===
+          { term: "ハードウェア", category: "コンピュータ", rate: 0.9, desc: "コンピュータ本体や周辺機器などの物理的な機械そのもの。" },
+          { term: "ソフトウェア", category: "コンピュータ", rate: 0.9, desc: "コンピュータを動かすためのプログラムやデータ。" },
+          { term: "CPU", category: "コンピュータ", rate: 0.95, desc: "中央処理装置。制御装置と演算装置からなり、コンピュータの頭脳にあたる。" },
+          { term: "主記憶装置（メモリ）", category: "コンピュータ", rate: 0.9, desc: "実行中のプログラムやデータを一時的に記憶する装置。" },
+          { term: "補助記憶装置", category: "コンピュータ", rate: 0.85, desc: "HDDやSSDなど、電源を切ってもデータが消えない記憶装置。" },
+          { term: "OS", category: "コンピュータ", rate: 0.9, desc: "基本ソフトウェア。ハードウェアの管理や、アプリへの共通機能の提供を行う。" },
+          { term: "LAN", category: "ネットワーク", rate: 0.85, desc: "学校や家庭、会社などの限られた範囲内のネットワーク。" },
+          { term: "WAN", category: "ネットワーク", rate: 0.8, desc: "離れたLAN同士を通信回線で結んだ広域ネットワーク。" },
+          { term: "インターネット", category: "ネットワーク", rate: 0.95, desc: "世界中のネットワークを相互に接続した巨大なコンピュータネットワーク。" },
+          { term: "プロトコル", category: "ネットワーク", rate: 0.9, desc: "ネットワーク上で通信を行うための約束事。" },
+          { term: "TCP/IP", category: "ネットワーク", rate: 0.85, desc: "インターネットで標準的に使われているプロトコル群。" },
+          { term: "IPアドレス", category: "ネットワーク", rate: 0.9, desc: "ネットワークに接続された機器を識別するための番号。" },
+          { term: "ドメイン名", category: "ネットワーク", rate: 0.8, desc: "IPアドレスを人間が覚えやすい文字に置き換えた名前。" },
+          { term: "DNS", category: "ネットワーク", rate: 0.8, desc: "ドメイン名とIPアドレスを対応付け、変換するシステム。" },
+          { term: "WWW", category: "ネットワーク", rate: 0.85, desc: "インターネット上でHTML文書などを公開・閲覧するシステム。" },
+          { term: "HTTP/HTTPS", category: "ネットワーク", rate: 0.8, desc: "WebブラウザとWebサーバの間でデータをやり取りするためのプロトコル。" },
+          { term: "パケット交換方式", category: "ネットワーク", rate: 0.75, desc: "データを「パケット」という小包に分割して送受信する通信方式。" },
+          { term: "ルータ", category: "ネットワーク", rate: 0.8, desc: "異なるネットワーク同士を接続し、パケットの経路制御を行う機器。" },
+
+          // === 3. 情報セキュリティ ===
+          { term: "情報セキュリティの3要素", category: "セキュリティ", rate: 0.85, desc: "機密性（Confidentiality）、完全性（Integrity）、可用性（Availability）のこと。CIAと呼ばれる。" },
+          { term: "マルウェア", category: "セキュリティ", rate: 0.9, desc: "悪意を持って作成されたソフトウェアの総称。" },
+          { term: "コンピュータウイルス", category: "セキュリティ", rate: 0.95, desc: "他のファイルに寄生して増殖し、害を及ぼすマルウェア。" },
+          { term: "トロイの木馬", category: "セキュリティ", rate: 0.8, desc: "有用なソフトを装って侵入し、裏で悪さをするマルウェア。" },
+          { term: "ランサムウェア", category: "セキュリティ", rate: 0.85, desc: "データを暗号化して使えなくし、復元と引き換えに身代金を要求するマルウェア。" },
+          { term: "ソーシャルエンジニアリング", category: "セキュリティ", rate: 0.85, desc: "人間の心理的な隙や行動のミスにつけ込んで情報を盗む手法。" },
+          { term: "フィッシング", category: "セキュリティ", rate: 0.9, desc: "偽のWebサイトなどに誘導し、IDやパスワードなどを盗み出す詐欺。" },
+          { term: "DoS攻撃", category: "セキュリティ", rate: 0.75, desc: "サーバに大量のアクセスを送りつけ、サービスを停止させる攻撃。" },
+          { term: "ファイアウォール", category: "セキュリティ", rate: 0.85, desc: "外部ネットワークからの不正アクセスを防ぐための「防火壁」。" },
+          { term: "暗号化", category: "セキュリティ", rate: 0.9, desc: "第三者に内容がわからないようにデータを変換すること。" },
+          { term: "共通鍵暗号方式", category: "セキュリティ", rate: 0.85, desc: "暗号化と復号に同じ鍵を使う方式。" },
+          { term: "公開鍵暗号方式", category: "セキュリティ", rate: 0.9, desc: "暗号化の鍵（公開）と復号の鍵（秘密）を別々にする方式。" },
+          { term: "ディジタル署名", category: "セキュリティ", rate: 0.8, desc: "送信者が本人であること、データが改ざんされていないことを証明する技術。" },
+          { term: "生体認証（バイオメトリクス）", category: "セキュリティ", rate: 0.8, desc: "指紋、顔、静脈など、身体的特徴を用いて本人確認を行う方式。" },
+          { term: "二要素認証", category: "セキュリティ", rate: 0.85, desc: "「知識」「所有」「生体」の3要素のうち、2つを組み合わせて認証する方式。" },
+
+          // === 4. データ分析・統計 ===
+          { term: "質的データ", category: "データ分析", rate: 0.7, desc: "分類や種類を表すデータ。四則演算に意味がない（例：血液型、性別）。" },
+          { term: "量的データ", category: "データ分析", rate: 0.7, desc: "大きさや量を表すデータ。数値としての意味を持つ（例：身長、テストの点数）。" },
+          { term: "代表値", category: "データ分析", rate: 0.8, desc: "データ全体の特徴を1つの数値で表したもの（平均値、中央値、最頻値など）。" },
+          { term: "平均値", category: "データ分析", rate: 0.95, desc: "データの総和をデータの個数で割った値。" },
+          { term: "中央値（メジアン）", category: "データ分析", rate: 0.9, desc: "データを大きさの順に並べたとき、ちょうど真ん中にくる値。" },
+          { term: "最頻値（モード）", category: "データ分析", rate: 0.85, desc: "データの中で最も頻繁に出現する値。" },
+          { term: "分散", category: "データ分析", rate: 0.80, desc: "データの散らばり具合を表す値。偏差の2乗の平均。" },
+          { term: "標準偏差", category: "データ分析", rate: 0.77, desc: "分散の正の平方根。データの散らばりを元の単位で表したもの。" },
+          { term: "第1四分位数", category: "データ分析", rate: 0.38, desc: "データを昇順に並べたときに、下位から25％の位置にあるデータ。" },
+          { term: "箱ひげ図", category: "データ分析", rate: 0.61, desc: "最大値・最小値・四分位数を使って、データの分布を可視化したグラフ。" },
+          { term: "外れ値", category: "データ分析", rate: 0.55, desc: "他のデータから極端に離れた値。" },
+          { term: "相関関係", category: "データ分析", rate: 0.85, desc: "一方が増えれば他方も増える（または減る）ような2つのデータの関係。" },
+          { term: "相関係数", category: "データ分析", rate: 0.7, desc: "-1から+1の値を取り、2つのデータの直線的な関係の強さを表す指標。" },
+          { term: "擬似相関", category: "データ分析", rate: 0.65, desc: "実際には因果関係がないのに、見かけ上相関があるように見える関係。" },
+          { term: "回帰分析", category: "データ分析", rate: 0.6, desc: "データ間の関係を数式（モデル）で表し、予測や分析を行う手法。" },
+          { term: "散布図", category: "データ分析", rate: 0.8, desc: "2つの項目のデータを縦軸と横軸にとり、点を打って関係を見るグラフ。" },
+          { term: "ヒストグラム", category: "データ分析", rate: 0.8, desc: "データの度数分布を柱状のグラフで表したもの。" },
+
+          // === 5. 情報社会・法規 ===
+          { term: "情報社会", category: "社会と法規", rate: 0.72, desc: "情報通信技術(ICT)が生活や経済に深く浸透し、情報が重要な価値を持つ社会。" },
+          { term: "知的財産権", category: "社会と法規", rate: 0.98, desc: "人間の知的創作活動の成果を保護する権利の総称。" },
+          { term: "著作権", category: "社会と法規", rate: 0.99, desc: "著作物を創作した人が持つ権利。登録不要で発生する。" },
+          { term: "産業財産権", category: "社会と法規", rate: 0.9, desc: "特許権、実用新案権、意匠権、商標権の4つ。登録が必要。" },
+          { term: "特許権", category: "社会と法規", rate: 0.9, desc: "高度な技術的アイデア（発明）を保護する権利。" },
+          { term: "肖像権", category: "社会と法規", rate: 0.8, desc: "自分の顔や姿を無断で撮影・公表されない権利。" },
+          { term: "個人情報保護法", category: "社会と法規", rate: 0.9, desc: "個人情報の有用性に配慮しつつ、個人の権利利益を保護するための法律。" },
+          { term: "パブリックドメイン", category: "社会と法規", rate: 0.6, desc: "著作権の保護期間切れや放棄により、誰でも自由に利用できる状態。" },
+          { term: "クリエイティブ・コモンズ", category: "社会と法規", rate: 0.65, desc: "著作者が「この条件を守れば自由に使ってよい」という意思表示をするためのマーク。" },
+          { term: "ディジタルデバイド", category: "社会と法規", rate: 0.7, desc: "情報技術を利用できる人とできない人の間に生じる格差。" },
+          { term: "フィルタリング", category: "社会と法規", rate: 0.75, desc: "違法・有害なWebサイトへのアクセスを制限する機能。" },
+          { term: "VDT障害", category: "社会と法規", rate: 0.6, desc: "ディスプレイなどの画面を長時間見続けることで起こる心身の不調。" },
+
+          // === 6. プログラミング・アルゴリズム・モデル化 ===
+          { term: "アルゴリズム", category: "プログラミング", rate: 0.95, desc: "問題を解決するための手順や計算方法。" },
+          { term: "フローチャート", category: "プログラミング", rate: 0.90, desc: "アルゴリズムを記号を用いて図式化したもの。" },
+          { term: "順次構造", category: "プログラミング", rate: 0.85, desc: "処理を上から順に実行する構造。" },
+          { term: "選択構造（分岐）", category: "プログラミング", rate: 0.85, desc: "条件によって処理を分ける構造（if文など）。" },
+          { term: "反復構造（繰り返し）", category: "プログラミング", rate: 0.85, desc: "条件を満たす間、処理を繰り返す構造（for文、while文など）。" },
+          { term: "変数", category: "プログラミング", rate: 0.9, desc: "データを一時的に保存しておくための「箱」。" },
+          { term: "関数", category: "プログラミング", rate: 0.8, desc: "一連の処理をまとめて名前をつけ、再利用できるようにしたもの。" },
+          { term: "バグ", category: "プログラミング", rate: 0.8, desc: "プログラムに含まれる誤りや不具合。" },
+          { term: "デバッグ", category: "プログラミング", rate: 0.8, desc: "プログラムのバグを見つけて修正する作業。" },
+          { term: "トレース", category: "プログラミング", rate: 0.7, desc: "プログラムの実行過程を1行ずつ追いかけ、変数の値の変化などを確認すること。" },
+          { term: "線形探索法", category: "アルゴリズム", rate: 0.75, desc: "データを先頭から順に探していく探索アルゴリズム。" },
+          { term: "二分探索法", category: "アルゴリズム", rate: 0.8, desc: "整列されたデータの中央と比較しながら探索範囲を半分にしていく高速な探索法。" },
+          { term: "交換法（バブルソート）", category: "アルゴリズム", rate: 0.7, desc: "隣り合うデータを比較・交換しながら整列させるアルゴリズム。" },
+          { term: "モデル化", category: "モデル化", rate: 0.8, desc: "現実世界の事象から、目的に必要な要素だけを抽出して単純化すること。" },
+          { term: "シミュレーション", category: "モデル化", rate: 0.85, desc: "モデルを使って実験を行い、将来の予測や分析を行うこと。" },
+          { term: "モンテカルロ法", category: "モデル化", rate: 0.6, desc: "乱数を用いて確率的な現象をシミュレーションする手法。" },
+          { term: "IoT", category: "情報技術", rate: 0.88, desc: "モノのインターネット。家電やセンサーなどがネットにつながり情報をやり取りすること。" },
+          { term: "ビッグデータ", category: "情報技術", rate: 0.85, desc: "従来のシステムでは扱いきれないほどの巨大で複雑なデータ群。" },
+          { term: "AI（人工知能）", category: "情報技術", rate: 0.9, desc: "学習や推論など、人間の知能のような働きをするコンピュータシステム。" },
+          { term: "クラウドコンピューティング", category: "情報技術", rate: 0.8, desc: "インターネット経由でサーバやストレージなどの資源を利用するサービス形態。" },
+          { term: "PDCAサイクル", category: "問題解決", rate: 0.95, desc: "Plan(計画)・Do(実行)・Check(評価)・Act(改善)を繰り返し、継続的に改善する手法。" },
+          { term: "ブレーンストーミング", category: "問題解決", rate: 0.7, desc: "批判禁止などのルールの下、自由にアイデアを出し合う集団発想法。" },
+        ];
+
+        /**
+         * ■ データソース 2: 知識・技能の整理
+         */
+        const DATA_SKILLS = [
+          // --- 情報の特性と伝達 ---
+          { term: "情報メディア", category: "情報の特性", rate: 1.0, desc: "ある事柄についての知らせを伝えるための、電話、新聞、郵便などの総称。" },
+          { term: "記録メディア", category: "情報の特性", rate: 1.0, desc: "メモ帳，USBメモリ，HDDなど、情報を記録するための媒体。" },
+          { term: "マスメディア", category: "情報の特性", rate: 1.0, desc: "新聞，ラジオ，テレビ，雑誌など、特定の発信者から不特定多数へ情報を伝達するメディア。" },
+          { term: "情報モラル", category: "情報モラル", rate: 1.0, desc: "他者の権利や安全に配慮して情報技術を適切に活用する態度。" },
+          { term: "アカウント", category: "情報モラル", rate: 1.0, desc: "インターネット上のサービスなどにアクセスするときの，利用者名やパスワードなどの情報の総称。" },
+          { term: "情報セキュリティ", category: "情報モラル", rate: 1.0, desc: "個人情報や重要情報などを守るための対策。" },
+          
+          // --- セキュリティ ---
+          { term: "人的脅威", category: "セキュリティ", rate: 1.0, desc: "情報に対する脅威のうち，システムやデータを破壊するなどの意図をもって行われるもの。" },
+          { term: "物理的脅威", category: "セキュリティ", rate: 1.0, desc: "情報に対する脅威のうち，故障や災害などの悪意のないもの。" },
+          { term: "機密性", category: "セキュリティ", rate: 1.0, desc: "情報セキュリティの三要素の一つ。許可された人だけが情報にアクセスできること。" },
+          { term: "完全性", category: "セキュリティ", rate: 1.0, desc: "情報セキュリティの三要素の一つ。情報が正確で、改ざんされていないこと。" },
+          { term: "可用性", category: "セキュリティ", rate: 1.0, desc: "情報セキュリティの三要素の一つ。必要な時にいつでも情報が使えること。" },
+          { term: "セキュリティポリシー", category: "セキュリティ", rate: 1.0, desc: "情報に対する脅威に対して，システムを安全に保つための規則や対策の基準。" },
+          { term: "技術的対策", category: "セキュリティ", rate: 1.0, desc: "情報セキュリティ対策のうち、コンピュータウイルス対策ソフトなどによって行う対策。" },
+          { term: "人的対策", category: "セキュリティ", rate: 1.0, desc: "情報セキュリティ対策のうち，利用者教育などによって行う対策。" },
+          { term: "情報セキュリティ監査", category: "セキュリティ", rate: 1.0, desc: "企業などが情報セキュリティの方針や行動規範に従って情報を適切に管理できているか確認すること。" },
+          
+          // --- 情報社会 ---
+          { term: "情報化", category: "情報社会", rate: 1.0, desc: "情報技術の進展により社会や生活が変化していくこと。" },
+          { term: "テレワーク", category: "情報社会", rate: 1.0, desc: "ネットワークを利用して，場所や時間の制約を受けずに仕事を行うこと。" },
+          { term: "著作権法", category: "法規", rate: 1.0, desc: "著作物を保護するための法律。" },
+          { term: "著作者", category: "法規", rate: 1.0, desc: "著作物を創作した人。" },
+          { term: "著作権", category: "法規", rate: 1.0, desc: "著作物を保護するために，著作者に認められる権利。" },
+          { term: "デジタルデバイド", category: "情報社会", rate: 1.0, desc: "情報技術を活用できる人と活用できない人の間に生じる格差。" },
+          { term: "炎上", category: "情報社会", rate: 1.0, desc: "インターネット上において，多くの誹謗中傷などが集中すること。" },
+          { term: "プロバイダ責任制限法", category: "法規", rate: 1.0, desc: "インターネット上で誹謗中傷などが生じた際に，プロバイダの責任範囲などを定めた法律。" },
+          
+          // --- デジタル化 ---
+          { term: "アナログデータ", category: "デジタル", rate: 1.0, desc: "数値を長さや角度などの連続した物理量で示したデータ。" },
+          { term: "デジタルデータ", category: "デジタル", rate: 1.0, desc: "数値を段階的に区切り，離散的に示したデータ。" },
+          { term: "標本化", category: "デジタル", rate: 1.0, desc: "アナログデータをデジタル化する際、一定の間隔でデータを抽出する処理。" },
+          { term: "量子化", category: "デジタル", rate: 1.0, desc: "アナログデータをデジタル化する際、抽出したデータを離散的な数値で表す処理。" },
+          { term: "符号化", category: "デジタル", rate: 1.0, desc: "アナログデータをデジタル化する際、数値を二進法で表す処理。" },
+          { term: "二進法", category: "デジタル", rate: 1.0, desc: "値を0と1の二値で表す方法。" },
+          { term: "文字コード", category: "デジタル", rate: 1.0, desc: "文字や記号などを，コンピュータで扱える形（数値）に対応付けたもの。" },
+          { term: "画素（ピクセル）", category: "デジタル", rate: 1.0, desc: "画像を構成する最小単位。" },
+          { term: "フレームレート", category: "デジタル", rate: 1.0, desc: "動画において、1秒間に表示される静止画（フレーム）の数。" },
+          { term: "ランレングス法", category: "デジタル", rate: 1.0, desc: "同じデータが連続する部分を「データ＋連続数」で置き換える圧縮方式。" },
+          { term: "ハフマン符号化", category: "デジタル", rate: 1.0, desc: "よく出現するデータに短い符号を割り当てる圧縮方式。" },
+          
+          // --- コンピュータ・プログラミング ---
+          { term: "五大装置", category: "コンピュータ", rate: 1.0, desc: "コンピュータを構成する主要な装置（入力・出力・記憶・演算・制御）の総称。" },
+          { term: "主記憶装置", category: "コンピュータ", rate: 1.0, desc: "記憶装置のうち，CPU から直接アクセスできる高速なもの。" },
+          { term: "クロック周波数", category: "コンピュータ", rate: 1.0, desc: "CPU の動作速度を表す指標。1秒間に繰り返される信号の回数。" },
+          { term: "OS", category: "コンピュータ", rate: 1.0, desc: "コンピュータ全体の資源を管理する基本ソフトウェア。" },
+          { term: "マルチタスク", category: "コンピュータ", rate: 1.0, desc: "複数のプロセスを同時に実行するように見せる仕組み。" },
+          { term: "バグ", category: "プログラミング", rate: 1.0, desc: "プログラムに含まれる誤り。" },
+          { term: "デバッグ", category: "プログラミング", rate: 1.0, desc: "プログラムの誤りを見つけて修正すること。" },
+          { term: "順次構造", category: "プログラミング", rate: 1.0, desc: "処理を上から順に実行するプログラム構造。" },
+          { term: "選択構造", category: "プログラミング", rate: 1.0, desc: "条件によって処理を分けるプログラム構造。" },
+          { term: "反復構造", category: "プログラミング", rate: 1.0, desc: "同じ処理を繰り返し実行するプログラム構造。" },
+          { term: "変数", category: "プログラミング", rate: 1.0, desc: "プログラム中の値を一時的に記憶するための箱。" },
+          { term: "配列", category: "プログラミング", rate: 1.0, desc: "同じ型のデータを複数まとめたデータ構造。" },
+          { term: "トレース", category: "プログラミング", rate: 1.0, desc: "プログラムの動作を一つ一つ追いながら確認すること。" },
+          
+          // --- モデル化・分析 ---
+          { term: "モデル化", category: "モデル化", rate: 1.0, desc: "現実の事象を簡略化して表すこと。" },
+          { term: "シミュレーション", category: "モデル化", rate: 1.0, desc: "モデルを用いて現象の変化を再現すること。" },
+          { term: "プロトコル", category: "ネットワーク", rate: 1.0, desc: "インターネット上で情報をやり取りするための決まり。" },
+          { term: "IPアドレス", category: "ネットワーク", rate: 1.0, desc: "ネットワーク上のコンピュータや機器を識別するための番号。" },
+          { term: "DNS", category: "ネットワーク", rate: 1.0, desc: "IPアドレスを人が分かりやすい名前に対応付ける仕組み。" },
+          { term: "ヒストグラム", category: "データ分析", rate: 1.0, desc: "データの分布の様子を視覚的に表した柱状のグラフ。" },
+          { term: "散布図", category: "データ分析", rate: 1.0, desc: "二つの量の関係を表したグラフ。" },
+          { term: "相関係数", category: "データ分析", rate: 1.0, desc: "二つの量の関係の強さを表す指標。" },
+          { term: "情報リテラシー", category: "社会", rate: 1.0, desc: "情報社会において必要とされる、情報を活用する能力。" },
+          { term: "機械学習", category: "AI", rate: 1.0, desc: "人工知能の一種で，人が与えたデータから規則性を見つけ出す技術。" },
+          { term: "BCP", category: "システム", rate: 1.0, desc: "障害や事故が発生した際に，業務を継続・復旧するための計画（事業継続計画）。" }
+        ];
+
+        const THRESHOLD_MUST = 0.7;
+        const THRESHOLD_GOOD = 0.5;
+
+        class App {
+            constructor() {
+                this.gameState = 'menu'; // menu, quiz, result
+                this.questions = [];
+                this.currentIndex = 0;
+                this.score = 0;
+                this.selectedOption = null;
+                this.isAnswered = false;
+                this.history = [];
+                this.selectedMode = 'ipsj';
+
+                this.container = document.getElementById('app');
+                this.render();
+            }
+
+            // ゲッター: 現在のデータセット
+            get currentDataSet() {
+                return this.selectedMode === 'ipsj' ? DATA_IPSJ : DATA_SKILLS;
+            }
+
+            // 画面描画の振り分け
+            render() {
+                this.container.innerHTML = '';
+                if (this.gameState === 'menu') {
+                    this.renderMenu();
+                } else if (this.gameState === 'quiz') {
+                    this.renderQuiz();
+                } else if (this.gameState === 'result') {
+                    this.renderResult();
+                }
+            }
+
+            // メニュー画面
+            renderMenu() {
+                const isIpsj = this.selectedMode === 'ipsj';
+                
+                const html = `
+                    <div class="flex flex-col items-center justify-center h-full text-center p-6 space-y-6 w-full max-w-md animate-fade-in">
+                        <div class="relative mb-2">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full blur opacity-30 animate-pulse"></div>
+                            <div class="relative p-6 bg-slate-900/80 rounded-2xl border border-slate-700 backdrop-blur-xl">
+                                <i class="fas fa-book-open text-6xl text-cyan-400 mb-2 mx-auto block"></i>
+                                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-200 to-blue-400 tracking-tight leading-tight">
+                                    情報I 共通テスト<br>単語マスター
+                                </h1>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full space-y-4">
+                            <!-- モード選択タブ -->
+                            <div class="bg-slate-900/50 p-1 rounded-xl border border-slate-700 flex relative">
+                                <button id="mode-ipsj" class="flex-1 py-2 px-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${isIpsj ? 'bg-slate-700 text-white shadow-lg ring-1 ring-slate-500' : 'text-slate-500 hover:text-slate-300'}">
+                                    <i class="fas fa-book w-4"></i> 情報処理学会
+                                </button>
+                                <button id="mode-skills" class="flex-1 py-2 px-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2 ${!isIpsj ? 'bg-slate-700 text-white shadow-lg ring-1 ring-slate-500' : 'text-slate-500 hover:text-slate-300'}">
+                                    <i class="fas fa-graduation-cap w-4"></i> 知識・技能
+                                </button>
+                            </div>
+
+                            <!-- 説明 -->
+                            <div class="text-xs text-slate-400 bg-slate-800/30 py-2 px-4 rounded-lg border border-slate-700/50">
+                                ${isIpsj ? '教科書用語リスト（総意率重視）から出題します。' : '「知識・技能の整理」に基づいた用語を確認します。'}
+                            </div>
+
+                            <!-- コース選択 -->
+                            <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 backdrop-blur-sm">
+                                <h3 class="text-slate-300 font-semibold mb-3 border-b border-slate-700 pb-2 text-sm text-left">コースを選択</h3>
+                                <div class="grid gap-3">
+                                    <button onclick="app.startGame(10)" class="flex items-center justify-between px-4 py-3 bg-slate-700/50 hover:bg-cyan-600/20 border border-slate-600 hover:border-cyan-500 rounded-lg transition-all group w-full text-left">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-bolt text-yellow-400 w-5 text-center"></i>
+                                            <div>
+                                                <div class="font-bold text-slate-100 text-sm">サクッと10問</div>
+                                                <div class="text-xs text-slate-400">隙間時間の確認に最適</div>
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-slate-500 group-hover:text-cyan-400"></i>
+                                    </button>
+
+                                    <button onclick="app.startGame(20)" class="flex items-center justify-between px-4 py-3 bg-slate-700/50 hover:bg-blue-600/20 border border-slate-600 hover:border-blue-500 rounded-lg transition-all group w-full text-left">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-layer-group text-blue-400 w-5 text-center"></i>
+                                            <div>
+                                                <div class="font-bold text-slate-100 text-sm">じっくり20問</div>
+                                                <div class="text-xs text-slate-400">バランスよく学習</div>
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-slate-500 group-hover:text-blue-400"></i>
+                                    </button>
+
+                                    <button onclick="app.startGame('all')" class="flex items-center justify-between px-4 py-3 bg-slate-700/50 hover:bg-purple-600/20 border border-slate-600 hover:border-purple-500 rounded-lg transition-all group w-full text-left">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-list-check text-purple-400 w-5 text-center"></i>
+                                            <div>
+                                                <div class="font-bold text-slate-100 text-sm">全問チャレンジ</div>
+                                                <div class="text-xs text-slate-400">総復習・力試し</div>
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-slate-500 group-hover:text-purple-400"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.container.innerHTML = html;
+
+                // イベントリスナ設定
+                document.getElementById('mode-ipsj').onclick = () => { this.selectedMode = 'ipsj'; this.render(); };
+                document.getElementById('mode-skills').onclick = () => { this.selectedMode = 'skills'; this.render(); };
+            }
+
+            // クイズ画面
+            renderQuiz() {
+                const currentQ = this.questions[this.currentIndex];
+                const badgeHtml = this.getRateBadgeHtml(currentQ.rate, currentQ.category);
+                
+                let optionsHtml = '';
+                currentQ.options.forEach((option, idx) => {
+                    let btnClass = "bg-slate-700/40 border-slate-600 hover:bg-slate-600/60 hover:border-slate-500";
+                    let iconHtml = '';
+
+                    if (this.isAnswered) {
+                        if (option.term === currentQ.term) {
+                            btnClass = "bg-green-500/20 border-green-500 text-green-300 shadow-[0_0_15px_rgba(34,197,94,0.3)]";
+                            iconHtml = '<i class="fas fa-circle-check ml-auto text-green-400"></i>';
+                        } else if (this.selectedOption === option) {
+                            btnClass = "bg-red-500/20 border-red-500 text-red-300";
+                            iconHtml = '<i class="fas fa-circle-xmark ml-auto text-red-400"></i>';
+                        } else {
+                            btnClass = "opacity-50 grayscale bg-slate-800/20 border-slate-700";
+                        }
+                    }
+
+                    optionsHtml += `
+                        <button onclick="app.handleAnswer(${idx})" ${this.isAnswered ? 'disabled' : ''} 
+                            class="relative p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center text-slate-200 font-bold ${btnClass}">
+                            <span class="truncate mr-2">${option.term}</span>
+                            ${iconHtml}
+                        </button>
+                    `;
+                });
+
+                let nextButtonHtml = '';
+                if (this.isAnswered) {
+                    const btnText = this.currentIndex < this.questions.length - 1 ? "次の問題へ" : "結果を見る";
+                    nextButtonHtml = `
+                        <button onclick="app.nextQuestion()" class="flex items-center space-x-2 bg-slate-100 text-slate-900 px-8 py-3 rounded-full font-bold hover:bg-white hover:scale-105 transition-all shadow-lg animate-zoom-in">
+                            <span>${btnText}</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    `;
+                }
+
+                const html = `
+                    <div class="flex flex-col h-full w-full max-w-3xl mx-auto p-4 md:p-6 animate-slide-in">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="text-slate-400 text-sm font-mono">
+                                QUESTION <span class="text-white text-xl font-bold">${this.currentIndex + 1}</span> / ${this.questions.length}
+                            </div>
+                            ${badgeHtml}
+                        </div>
+
+                        <div class="flex-grow flex flex-col justify-center mb-8">
+                            <div class="bg-slate-800/50 border border-slate-600/50 rounded-2xl p-6 md:p-8 backdrop-blur-md shadow-xl min-h-[160px] flex items-center justify-center">
+                                <p class="text-lg md:text-xl text-slate-100 font-medium leading-relaxed text-center">
+                                    ${currentQ.desc}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            ${optionsHtml}
+                        </div>
+
+                        <div class="h-16 flex items-center justify-center">
+                            ${nextButtonHtml}
+                        </div>
+                    </div>
+                `;
+                this.container.innerHTML = html;
+            }
+
+            // 結果画面
+            renderResult() {
+                const percentage = Math.round((this.score / this.questions.length) * 100);
+                const hasMistakes = this.score < this.questions.length;
+                const awardColor = percentage >= 80 ? 'text-yellow-400' : 'text-slate-400';
+
+                let historyHtml = '';
+                this.history.forEach(record => {
+                    const icon = record.isCorrect 
+                        ? '<i class="fas fa-circle-check w-5 h-5 text-green-400"></i>' 
+                        : '<i class="fas fa-circle-xmark w-5 h-5 text-red-400"></i>';
+                    
+                    const badge = this.getRateBadgeHtml(record.question.rate, record.question.category);
+                    
+                    historyHtml += `
+                        <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-700/50 flex items-start space-x-3">
+                            <div class="mt-1 flex-shrink-0">${icon}</div>
+                            <div class="flex-grow text-left">
+                                <div class="flex justify-between items-start mb-1 flex-wrap gap-1">
+                                    <span class="font-bold text-slate-200">${record.question.term}</span>
+                                    ${badge}
+                                </div>
+                                <p class="text-sm text-slate-400 mt-1">${record.question.desc}</p>
+                                ${!record.isCorrect ? `
+                                    <div class="mt-2 text-xs bg-red-900/30 text-red-200 px-2 py-1 rounded inline-block">
+                                        あなたの回答: ${record.userChoice.term}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const html = `
+                    <div class="h-full flex flex-col p-4 md:p-8 overflow-hidden w-full max-w-3xl mx-auto animate-zoom-in">
+                        <div class="text-center mb-6">
+                            <div class="inline-flex items-center justify-center p-4 bg-slate-800/50 rounded-full border border-slate-700 mb-2 shadow-xl backdrop-blur-md">
+                                <i class="fas fa-award text-4xl ${awardColor}"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white">Result</h2>
+                            <div class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-400 mb-2">
+                                ${this.score} <span class="text-xl text-slate-500 font-medium">/ ${this.questions.length}</span>
+                            </div>
+                            <p class="text-slate-400 font-mono text-sm">Accuracy: ${percentage}%</p>
+                        </div>
+
+                        <div class="flex-grow overflow-y-auto pr-2 space-y-3 custom-scrollbar mb-4">
+                            ${historyHtml}
+                        </div>
+
+                        <div class="mt-2 text-center space-y-3">
+                            ${hasMistakes ? `
+                                <button onclick="app.retryMistakes()" class="flex items-center justify-center space-x-2 w-full md:w-2/3 mx-auto bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-orange-900/20">
+                                    <i class="fas fa-rotate"></i>
+                                    <span>間違えた問題だけ解く</span>
+                                </button>
+                            ` : ''}
+                            
+                            <button onclick="app.resetToMenu()" class="flex items-center justify-center space-x-2 w-full md:w-auto mx-auto text-slate-400 hover:text-white px-6 py-2 rounded-xl font-medium transition-all">
+                                <i class="fas fa-rotate-left"></i>
+                                <span>タイトルに戻る</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                this.container.innerHTML = html;
+            }
+
+            // バッジHTML生成
+            getRateBadgeHtml(rate, category) {
+                let colorClass = "bg-gray-500/20 text-gray-300 border-gray-500/50";
+                let label = "参考";
+                
+                if (rate >= THRESHOLD_MUST) {
+                    colorClass = "bg-orange-500/20 text-orange-300 border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)]";
+                    label = `必修`;
+                } else if (rate >= THRESHOLD_GOOD) {
+                    colorClass = "bg-pink-500/20 text-pink-300 border-pink-500/50 shadow-[0_0_10px_rgba(236,72,153,0.3)]";
+                    label = `重要`;
+                }
+
+                return `
+                    <div class="flex gap-2">
+                         <span class="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-mono border backdrop-blur-md bg-blue-500/20 text-blue-300 border-blue-500/50 whitespace-nowrap">
+                          ${category}
+                        </span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-mono border backdrop-blur-md ${colorClass} whitespace-nowrap">
+                          ${label} (${Math.floor(rate * 100)}%)
+                        </span>
+                    </div>
+                `;
+            }
+
+            // ゲームロジック
+            startGame(count) {
+                const sourceData = this.currentDataSet;
+                
+                // データのフィルタリング
+                let validTerms = sourceData.filter(item => item.rate >= THRESHOLD_GOOD);
+                if (validTerms.length < 4) validTerms = sourceData;
+                
+                // シャッフル
+                const shuffledTerms = [...validTerms].sort(() => 0.5 - Math.random());
+                
+                // 問題数決定
+                const limit = count === 'all' ? shuffledTerms.length : Math.min(count, shuffledTerms.length);
+                const selectedTerms = shuffledTerms.slice(0, limit);
+
+                this.generateQuiz(selectedTerms);
+            }
+
+            generateQuiz(targetTerms) {
+                const sourceData = this.currentDataSet;
+
+                const quizSet = targetTerms.map(correctItem => {
+                    const sameCategoryOptions = sourceData.filter(
+                        item => item.category === correctItem.category && item.term !== correctItem.term
+                    );
+                    const otherCategoryOptions = sourceData.filter(
+                        item => item.category !== correctItem.category
+                    );
+
+                    let distractors = [...sameCategoryOptions].sort(() => 0.5 - Math.random());
+                    
+                    if (distractors.length < 3) {
+                        const needed = 3 - distractors.length;
+                        const others = [...otherCategoryOptions].sort(() => 0.5 - Math.random()).slice(0, needed);
+                        distractors = [...distractors, ...others];
+                    } else {
+                        distractors = distractors.slice(0, 3);
+                    }
+                    
+                    const options = [...distractors, correctItem].sort(() => 0.5 - Math.random());
+                    
+                    return {
+                        ...correctItem,
+                        options
+                    };
+                });
+
+                this.questions = quizSet;
+                this.currentIndex = 0;
+                this.score = 0;
+                this.history = [];
+                this.isAnswered = false;
+                this.selectedOption = null;
+                this.gameState = 'quiz';
+                this.render();
+            }
+
+            retryMistakes() {
+                const wrongTerms = this.history
+                    .filter(h => !h.isCorrect)
+                    .map(h => this.currentDataSet.find(item => item.term === h.question.term))
+                    .filter(item => item !== undefined);
+
+                if (wrongTerms.length > 0) {
+                    const shuffledWrongTerms = [...wrongTerms].sort(() => 0.5 - Math.random());
+                    this.generateQuiz(shuffledWrongTerms);
+                }
+            }
+
+            handleAnswer(optionIndex) {
+                if (this.isAnswered) return;
+
+                const currentQ = this.questions[this.currentIndex];
+                const option = currentQ.options[optionIndex];
+                const isCorrect = option.term === currentQ.term;
+                
+                this.selectedOption = option;
+                this.isAnswered = true;
+
+                if (isCorrect) {
+                    this.score++;
+                }
+
+                this.history.push({
+                    question: currentQ,
+                    userChoice: option,
+                    isCorrect
+                });
+                
+                this.render();
+            }
+
+            nextQuestion() {
+                if (this.currentIndex < this.questions.length - 1) {
+                    this.currentIndex++;
+                    this.isAnswered = false;
+                    this.selectedOption = null;
+                    this.render();
+                } else {
+                    this.gameState = 'result';
+                    this.render();
+                }
+            }
+
+            resetToMenu() {
+                this.gameState = 'menu';
+                this.render();
+            }
+        }
+
+        // アプリ起動
+        const app = new App();
+    </script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
